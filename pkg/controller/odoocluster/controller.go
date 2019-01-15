@@ -42,7 +42,7 @@ import (
 // +kubebuilder:rbac:groups=cluster.odoo.io,resources=odooclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cluster.odoo.io,resources=odooclusters/status,verbs=get;update;patch
 func Add(mgr manager.Manager) error {
-	_, err := components.NewReconciler("odoocluster-controller", mgr, &clusterv1beta1.OdooCluster{}, Templates, []components.Component{
+	_, err := components.NewReconciler("odoocluster.controller", mgr, &clusterv1beta1.OdooCluster{}, Templates, []components.Component{
 		// Set default values.
 		odooclustercomponents.NewDefaults(),
 

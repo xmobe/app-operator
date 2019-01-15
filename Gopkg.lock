@@ -43,14 +43,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:352260b19b2c9a8be8fee014766d17c3da31c4c194882998fe49811c8819c179"
+  digest = "1:34436cbc105b0e35990416b78fd5a6dcb90066cdd33c1ed91c50f34403268da0"
   name = "github.com/blaggacao/ridecell-operator"
   packages = [
     "pkg/components",
     "pkg/templates",
   ]
   pruneopts = "T"
-  revision = "3e3e779f2ac37135561b75c5f6b4ab80cf48cfd3"
+  revision = "3161381fc07c7500f69c9cc67939753034ff88c6"
 
 [[projects]]
   digest = "1:9f42202ac457c462ad8bb9642806d275af9ab4850cf0b1960b9c6f083d4a309a"

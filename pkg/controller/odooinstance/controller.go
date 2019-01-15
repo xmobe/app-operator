@@ -42,7 +42,7 @@ import (
 // +kubebuilder:rbac:groups=instance.odoo.io,resources=odooinstances,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=instance.odoo.io,resources=odooinstances/status,verbs=get;update;patch
 func Add(mgr manager.Manager) error {
-	_, err := components.NewReconciler("odoo-instance-controller", mgr, &instancev1beta1.OdooInstance{}, Templates, []components.Component{
+	_, err := components.NewReconciler("odooinstance.controller", mgr, &instancev1beta1.OdooInstance{}, Templates, []components.Component{
 		// Set default values and meta data.
 		odooinstancecomponents.NewDefaults(),
 		odooinstancecomponents.NewMeta(),
