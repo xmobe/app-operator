@@ -31,8 +31,7 @@
 package components
 
 import (
-	e "errors"
-	"github.com/golang/glog"
+	"fmt"
 
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	batchv1 "k8s.io/api/batch/v1"
@@ -91,11 +90,15 @@ func (comp *copierComponent) Reconcile(ctx *components.ComponentContext) (reconc
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if len(parentinstances.Items) > 1 {
-		return reconcile.Result{}, e.New("more than one parent instance found")
+		err := fmt.Errorf("more than one parent instance found")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+		return reconcile.Result{}, err
 	} else if len(parentinstances.Items) < 1 {
-		glog.Infof("[%s/%s] copier: Did not find parent OdooInstance with hostname %s\n", instance.Namespace, instance.Name, *instance.Spec.ParentHostname)
-		return reconcile.Result{Requeue: true}, e.New("No parent instance found")
+		err := fmt.Errorf("no parent instance found")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+		return reconcile.Result{Requeue: true}, err
 	}
 
 	extra := map[string]interface{}{}
@@ -110,8 +113,6 @@ func (comp *copierComponent) Reconcile(ctx *components.ComponentContext) (reconc
 	existing := &batchv1.Job{}
 	err = ctx.Get(ctx.Context, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
-		glog.Infof("[%s/%s] copier: Creating copier Job %s/%s\n", instance.Namespace, instance.Name, job.Namespace, job.Name)
-
 		instance.SetStatusConditionCopyJobCreationCreated()
 
 		// Launching the job
@@ -125,6 +126,7 @@ func (comp *copierComponent) Reconcile(ctx *components.ComponentContext) (reconc
 			return reconcile.Result{Requeue: true}, err
 		}
 		// Job is started, so we're done for now.
+		ctx.Logger.V(1).Info("reconciled", "job", job, "operation", "created")
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		// Some other real error, bail.
@@ -136,20 +138,19 @@ func (comp *copierComponent) Reconcile(ctx *components.ComponentContext) (reconc
 	if existing.Status.Succeeded > 0 {
 		// Success! Update the corresponding OdooInstanceStatusCondition and delete the job.
 
-		glog.Infof("[%s/%s] copier: Copier Job succeeded, setting OdooInstanceStatusCondition \"Created\" to 'true'\n", instance.Namespace, instance.Name)
-
 		instance.SetStatusConditionCopyJobSuccessCreated()
+		ctx.Logger.V(1).Info("set", "status contition", "Created", "status", "true")
 
-		glog.V(2).Infof("[%s/%s] copier: Deleting copier Job %s/%s\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
 		err = ctx.Delete(ctx.Context, existing, client.PropagationPolicy(metav1.DeletePropagationBackground))
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
+		ctx.Logger.V(1).Info("reconciled", "job", existing, "operation", "deleted")
 	}
 
 	// ... Or if the job failed.
 	if existing.Status.Failed > 0 {
-		glog.Errorf("[%s/%s] copier: Copier Job failed, leaving job %s/%s for debugging purposes\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
+		ctx.Logger.V(1).Info("leaving failed job for debugging", "job", existing)
 	}
 
 	// Job is still running, will get reconciled when it finishes.

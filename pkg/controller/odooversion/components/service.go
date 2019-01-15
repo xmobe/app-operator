@@ -31,8 +31,6 @@
 package components
 
 import (
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -91,7 +89,7 @@ func (comp *ingressComponent) Reconcile(ctx *components.ComponentContext) (recon
 	existing := &batchv1.Job{}
 	err = ctx.Get(ctx.Context, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
-		glog.Infof("[%s/%s] copier: Creating copier Job %s/%s\n", instance.Namespace, instance.Name, job.Namespace, job.Name)
+		ctx.Logger.V(1).Info("creating copier job")
 
 		// Launching the job
 		err = controllerutil.SetControllerReference(instance, job, ctx.Scheme)
@@ -115,9 +113,7 @@ func (comp *ingressComponent) Reconcile(ctx *components.ComponentContext) (recon
 	if existing.Status.Succeeded > 0 {
 		// Success! Update the corresponding OdooInstanceStatusCondition and delete the job.
 
-		glog.Infof("[%s/%s] copier: Copier Job succeeded, setting OdooInstanceStatusCondition \"Created\" to 'true'\n", instance.Namespace, instance.Name)
-
-		glog.V(2).Infof("[%s/%s] copier: Deleting copier Job %s/%s\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
+		ctx.Logger.V(1).Info("deleting sucessful creating copier job")
 		err = ctx.Delete(ctx.Context, existing, client.PropagationPolicy(metav1.DeletePropagationBackground))
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
@@ -126,7 +122,7 @@ func (comp *ingressComponent) Reconcile(ctx *components.ComponentContext) (recon
 
 	// ... Or if the job failed.
 	if existing.Status.Failed > 0 {
-		glog.Errorf("[%s/%s] copier: Copier Job failed, leaving job %s/%s for debugging purposes\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
+		ctx.Logger.V(1).Info("leaving failed job for debugging")
 	}
 
 	// Job is still running, will get reconciled when it finishes.

@@ -31,8 +31,7 @@
 package components
 
 import (
-	e "errors"
-	"github.com/golang/glog"
+	"fmt"
 
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -90,10 +89,13 @@ func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reco
 		return reconcile.Result{}, err
 	}
 	if len(parentinstances.Items) > 1 {
-		return reconcile.Result{}, e.New("more than one parent instance found")
+		err := fmt.Errorf("more than one parent instance found")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+		return reconcile.Result{}, err
 	} else if len(parentinstances.Items) < 1 {
-		glog.Infof("[%s/%s] backuper: Did not find parent OdooInstance with hostname %s\n", instance.Namespace, instance.Name, *instance.Spec.ParentHostname)
-		return reconcile.Result{Requeue: true}, e.New("No parent instance found")
+		err := fmt.Errorf("no parent instance found")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+		return reconcile.Result{Requeue: true}, err
 	}
 
 	extra := map[string]interface{}{}
@@ -108,7 +110,6 @@ func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reco
 	existing := &batchv1beta1.CronJob{}
 	err = ctx.Get(ctx.Context, types.NamespacedName{Name: cronjob.Name, Namespace: cronjob.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
-		glog.Infof("[%s/%s] copier: Creating copier Job %s/%s\n", instance.Namespace, instance.Name, cronjob.Namespace, cronjob.Name)
 
 		instance.SetStatusConditionBackupCronJobSecheduleBackuped()
 
@@ -123,6 +124,7 @@ func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reco
 			return reconcile.Result{Requeue: true}, err
 		}
 		// CronJob is created, so we're done for now.
+		ctx.Logger.V(1).Info("reconciled", "object", obj, "operation", "created")
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		// Some other real error, bail.

@@ -31,8 +31,6 @@
 package components
 
 import (
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -87,8 +85,6 @@ func (comp *initializerComponent) Reconcile(ctx *components.ComponentContext) (r
 	existing := &batchv1.Job{}
 	err = ctx.Get(ctx.Context, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
-		glog.Infof("[%s/%s] initializer: Creating initializer Job %s/%s\n", instance.Namespace, instance.Name, job.Namespace, job.Name)
-
 		instance.SetStatusConditionInitJobCreationCreated()
 
 		// Launching the job
@@ -102,6 +98,7 @@ func (comp *initializerComponent) Reconcile(ctx *components.ComponentContext) (r
 			return reconcile.Result{Requeue: true}, err
 		}
 		// Job is started, so we're done for now.
+		ctx.Logger.V(1).Info("reconciled", "object", obj, "operation", "created")
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		// Some other real error, bail.
@@ -113,20 +110,19 @@ func (comp *initializerComponent) Reconcile(ctx *components.ComponentContext) (r
 	if existing.Status.Succeeded > 0 {
 		// Success! Update the corresponding OdooInstanceStatusCondition and delete the job.
 
-		glog.Infof("[%s/%s] initializer: Initializer Job succeeded, setting OdooInstanceStatusCondition \"Created\" to 'true'\n", instance.Namespace, instance.Name)
-
 		instance.SetStatusConditionInitJobSuccessCreated()
+		ctx.Logger.V(1).Info("set", "status contition", "Created", "status", "true")
 
-		glog.V(2).Infof("[%s/%s] initializer: Deleting initializer Job %s/%s\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
 		err = ctx.Delete(ctx.Context, existing, client.PropagationPolicy(metav1.DeletePropagationBackground))
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
+		ctx.Logger.V(1).Info("reconciled", "job", existing, "operation", "deleted")
 	}
 
 	// ... Or if the job failed.
 	if existing.Status.Failed > 0 {
-		glog.Errorf("[%s/%s] initializer: Initializer Job failed, leaving job %s/%s for debugging purposes\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
+		ctx.Logger.V(1).Info("leaving failed job for debugging", "job", existing)
 	}
 
 	// Job is still running, will get reconciled when it finishes.

@@ -31,9 +31,6 @@
 package components
 
 import (
-	// "fmt"
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -84,7 +81,6 @@ func (comp *metaComponent) Reconcile(ctx *components.ComponentContext) (reconcil
 		return reconcile.Result{}, err
 	}
 
-	metaObj, _ := ctx.Top.(metav1.Object)
-	glog.Infof("[%v/%v] meta: OdooInstance, operation: %v\n", metaObj.GetNamespace(), metaObj.GetName(), op)
+	ctx.Logger.V(1).Info("reconciled", "odoo instance", instance, "operation", op)
 	return reconcile.Result{}, nil
 }

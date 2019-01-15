@@ -31,8 +31,6 @@
 package components
 
 import (
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,15 +101,12 @@ func (comp *ingressComponent) Reconcile(ctx *components.ComponentContext) (recon
 	// Prepare extra data with OdooInstanceList
 	extra := map[string]interface{}{}
 	extra["InstanceList"] = odooInstanceList
-	res, op, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*extensionsv1beta1.Ingress)
 		existing := existingObj.(*extensionsv1beta1.Ingress)
 		// Copy the Spec over.
 		existing.Spec = goal.Spec
 		return nil
 	})
-
-	glog.Infof("[%s/%s] ingress: Ingress, operation: %s\n", instance.Namespace, instance.Name, op)
-
 	return res, err
 }

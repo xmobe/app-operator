@@ -31,7 +31,7 @@
 package components
 
 import (
-	"github.com/golang/glog"
+	"fmt"
 
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	batchv1 "k8s.io/api/batch/v1"
@@ -75,20 +75,33 @@ func (_ *synchMigratorComponent) IsReconcilable(ctx *components.ComponentContext
 		return false
 	}
 	// Get the parent instance ...
-	parentinstance := &instancev1beta1.OdooInstance{}
+
+	parentinstances := &instancev1beta1.OdooInstanceList{}
+
+	// Set up the extra data map for the template.
 	listoptions := client.InNamespace(instance.Namespace)
-	listoptions.MatchingField("hostname", *instance.Spec.ParentHostname)
 	listoptions.MatchingLabels(map[string]string{
-		"cluster.odoo.io/name": instance.Labels["cluster.odoo.io/name"],
+		"cluster.odoo.io/name":      instance.Labels["cluster.odoo.io/name"],
+		"instance.odoo.io/hostname": *instance.Spec.ParentHostname,
 	})
-	err := ctx.List(ctx.Context, listoptions, parentinstance)
-	if err != nil && errors.IsNotFound(err) {
-		glog.Infof("[%s/%s] sync-migrator: Did not find parent OdooInstance %s/%s\n", instance.Namespace, instance.Name, instance.Namespace, *instance.Spec.ParentHostname)
-		return false
-	} else if err != nil {
+	err := ctx.List(ctx.Context, listoptions, parentinstances)
+	if err != nil {
+		err := fmt.Errorf("call to ctx.List failed")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
 		return false
 	}
-	if instance.Spec.Version == parentinstance.Spec.Version {
+
+	if len(parentinstances.Items) > 1 {
+		err := fmt.Errorf("more than one parent instance found")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+		return false
+	} else if len(parentinstances.Items) < 1 {
+		err := fmt.Errorf("no parent instance found")
+		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+		return false
+	}
+
+	if instance.Spec.Version == parentinstances.Items[0].Spec.Version {
 		// ... and apply only if there is an explicit version bump over the parent instance
 		// TODO: Ensure version order
 		return false
@@ -107,8 +120,6 @@ func (comp *synchMigratorComponent) Reconcile(ctx *components.ComponentContext) 
 	existing := &batchv1.Job{}
 	err = ctx.Get(ctx.Context, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
-		glog.Infof("[%s/%s] sync-migrator: Creating synchronous migrator Job %s/%s\n", instance.Namespace, instance.Name, job.Namespace, job.Name)
-
 		instance.SetStatusConditionSynchronousMigratorJobCreationMigrated()
 
 		// Launching the job
@@ -122,6 +133,7 @@ func (comp *synchMigratorComponent) Reconcile(ctx *components.ComponentContext) 
 			return reconcile.Result{Requeue: true}, err
 		}
 		// Job is started, so we're done for now.
+		ctx.Logger.V(1).Info("reconciled", "object", obj, "operation", "created")
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		// Some other real error, bail.
@@ -133,20 +145,19 @@ func (comp *synchMigratorComponent) Reconcile(ctx *components.ComponentContext) 
 	if existing.Status.Succeeded > 0 {
 		// Success! Update the corresponding OdooInstanceStatusCondition and delete the job.
 
-		glog.Infof("[%s/%s] sync-migrator: Synchronous migrator Job succeeded, setting OdooInstanceStatusCondition \"Migrated\" to 'true'\n", instance.Namespace, instance.Name)
-
 		instance.SetStatusConditionSynchronousMigratorJobSuccessMigrated()
+		ctx.Logger.V(1).Info("set", "status contition", "Migrated", "status", "true")
 
-		glog.V(2).Infof("[%s/%s] sync-migrator: Deleting synchronous migrator Job %s/%s\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
 		err = ctx.Delete(ctx.Context, existing, client.PropagationPolicy(metav1.DeletePropagationBackground))
 		if err != nil {
 			return reconcile.Result{Requeue: true}, err
 		}
+		ctx.Logger.V(1).Info("reconciled", "job", existing, "operation", "deleted")
 	}
 
 	// ... Or if the job failed.
 	if existing.Status.Failed > 0 {
-		glog.Errorf("[%s/%s] sync-migrator: Synchronous migrator Job failed, leaving job %s/%s for debugging purposes\n", instance.Namespace, instance.Name, existing.Namespace, existing.Name)
+		ctx.Logger.V(1).Info("leaving failed job for debugging", "job", existing)
 	}
 
 	// Job is still running, will get reconciled when it finishes.

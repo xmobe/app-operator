@@ -32,7 +32,6 @@ package components
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 
@@ -81,6 +80,7 @@ func (comp *appSecretComponent) Reconcile(ctx *components.ComponentContext) (rec
 			operatorNamespace, err = getInClusterNamespace()
 			if err != nil {
 				instance.SetStatusConditionOperatorNamespaceErrored()
+				ctx.Logger.Error(err, "no namespace found")
 				return reconcile.Result{}, err
 			}
 		}
@@ -94,7 +94,7 @@ func (comp *appSecretComponent) Reconcile(ctx *components.ComponentContext) (rec
 		}
 	}
 
-	res, op, err := ctx.CreateOrUpdate(comp.templatePath, nil, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, nil, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.Secret)
 		existing := existingObj.(*corev1.Secret)
 		// Copy the secret Data over.
@@ -104,7 +104,9 @@ func (comp *appSecretComponent) Reconcile(ctx *components.ComponentContext) (rec
 			_, ok := upstream.Data["adminpasswd"]
 			if !ok {
 				instance.SetStatusConditionSecretLoaningAdminPasswdNotFoundErrored()
-				return fmt.Errorf("app secret loaning failed: expected key not found")
+				err := fmt.Errorf("app secret loaning failed: expected key not found")
+				ctx.Logger.Error(err, "app secret loaning failed")
+				return err
 			}
 			existing.Data["adminpasswd"] = upstream.Data["adminpasswd"]
 			instance.SetStatusConditionSecretLoaningSuccessAppSecretLoaned()
@@ -112,9 +114,6 @@ func (comp *appSecretComponent) Reconcile(ctx *components.ComponentContext) (rec
 		existing.Type = goal.Type
 		return nil
 	})
-
-	glog.Infof("[%s/%s] app_secret: AppSecret, operation: %s\n", instance.Namespace, instance.Name, op)
-
 	return res, err
 }
 

@@ -31,14 +31,10 @@
 package components
 
 import (
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
 )
 
 type deploymentComponent struct {
@@ -66,16 +62,12 @@ func (comp *deploymentComponent) Reconcile(ctx *components.ComponentContext) (re
 	extra := map[string]interface{}{}
 	extra["ConfigFile"] = "ok"
 
-	res, op, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*appsv1.Deployment)
 		existing := existingObj.(*appsv1.Deployment)
 		// Copy the configuration Data over.
 		existing.Spec = goal.Spec
 		return nil
 	})
-
-	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
-	glog.Infof("[%s/%s] deployment: Deployment, operation: %s\n", instance.Namespace, instance.Name, op)
-
 	return res, err
 }

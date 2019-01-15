@@ -31,8 +31,6 @@
 package components
 
 import (
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -63,16 +61,12 @@ func (_ *dbNamespaceComponent) IsReconcilable(_ *components.ComponentContext) bo
 
 func (comp *dbNamespaceComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 
-	res, op, err := ctx.CreateOrUpdate(comp.templatePath, nil, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, nil, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*clusterv1beta1.DBNamespace)
 		existing := existingObj.(*clusterv1beta1.DBNamespace)
 		// Copy the Spec over.
 		existing.Spec = goal.Spec
 		return nil
 	})
-
-	instance := ctx.Top.(*clusterv1beta1.OdooCluster)
-	glog.Infof("[%s/%s] dbnamespace: DBNamespace, operation:  %s\n", instance.Namespace, instance.Name, op)
-
 	return res, err
 }

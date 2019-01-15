@@ -32,7 +32,6 @@ package components
 
 import (
 	"bytes"
-	"github.com/golang/glog"
 	ini "gopkg.in/ini.v1"
 
 	"github.com/blaggacao/ridecell-operator/pkg/components"
@@ -65,7 +64,7 @@ func (_ *configmapComponent) IsReconcilable(_ *components.ComponentContext) bool
 }
 
 func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
+	// instance := ctx.Top.(*clusterv1beta1.OdooVersion)
 	// trackinstance := nil
 	// clusterinstance := nil
 
@@ -81,16 +80,13 @@ func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (rec
 	extra := map[string]interface{}{}
 	extra["ConfigFile"] = buf.String()
 
-	res, op, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.ConfigMap)
 		existing := existingObj.(*corev1.ConfigMap)
 		// Copy the configuration Data over.
 		existing.Data = goal.Data
 		return nil
 	})
-
-	glog.Infof("[%s/%s] configmap: ConfigMap (cluster-level), operation: %s\n", instance.Namespace, instance.Name, op)
-
 	return res, err
 }
 

@@ -31,8 +31,6 @@
 package components
 
 import (
-	"github.com/golang/glog"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -69,16 +67,12 @@ func (_ *persistentVolumeClaimComponent) IsReconcilable(ctx *components.Componen
 func (comp *persistentVolumeClaimComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	extra := map[string]interface{}{}
 	extra["VolumeSpec"] = "ok"
-	res, op, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.ConfigMap)
 		existing := existingObj.(*corev1.ConfigMap)
 		// Copy the configuration Data over.
 		existing.Data = goal.Data
 		return nil
 	})
-
-	instance := ctx.Top.(*clusterv1beta1.OdooCluster)
-	glog.Infof("[%s/%s] persistentvolumeclaim: PersistentVolumeClaims, operation: %s\n", instance.Namespace, instance.Name, op)
-
 	return res, err
 }
