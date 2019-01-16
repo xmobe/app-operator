@@ -87,6 +87,7 @@ type OdooClusterStatusCondition struct {
 
 // OdooCluster is the Schema for the odooclusters API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type OdooCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
