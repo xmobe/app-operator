@@ -21,7 +21,7 @@ import (
 	"runtime"
 )
 
-//go:generate go run ../../../hack/assets_generate.go
+//go:generate go run ../../../hack/assets_generate_odoocluster.go
 var Templates http.FileSystem
 
 func init() {
