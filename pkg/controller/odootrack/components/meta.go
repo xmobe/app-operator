@@ -28,26 +28,45 @@
  *
  */
 
-// Package labels contains helper functions for manipulating labels.
-package labels
+package components
 
 import (
-	meta "k8s.io/apimachinery/pkg/api/meta"
+	"fmt"
+
+	"github.com/blaggacao/ridecell-operator/pkg/components"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
 )
 
-// AddLabels adds the given labels to the given objects ObjectMeta.
-// Returns true if the object was updated.
-func AddLabels(obj runtime.Object, newLabels map[string]string) error {
-	accessor, err := meta.Accessor(obj)
-	if err != nil {
-		return err
-	}
-	labels := accessor.GetLabels()
-	for k, v := range newLabels {
-		labels[k] = v
+type metaComponent struct{}
 
+func NewMeta() *metaComponent { return &metaComponent{} }
+
+func (*metaComponent) WatchTypes() []runtime.Object { return []runtime.Object{} }
+
+func (*metaComponent) IsReconcilable(_ *components.ComponentContext) bool { return true }
+
+func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
+
+	clusterName, err := components.GetOwnerName(ctx.Top, "OdooCluster")
+	if err != nil {
+		return reconcile.Result{}, err
 	}
-	accessor.SetLabels(labels)
-	return nil
+	instance := ctx.Top.(*clusterv1beta1.OdooTrack)
+	res, _, err := ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
+		goalMeta.Labels = map[string]string{
+			"cluster.odoo.io/name":         *clusterName,
+			"cluster.odoo.io/track":        fmt.Sprintf("%v", instance.Spec.Track),
+			"app.kubernetes.io/name":       "odootrack",
+			"app.kubernetes.io/instance":   instance.Name,
+			"app.kubernetes.io/component":  "cluster",
+			"app.kubernetes.io/managed-by": "odoo-operator",
+			"app.kubernetes.io/version":    "NA",
+		}
+		return nil
+	})
+	return res, err
 }

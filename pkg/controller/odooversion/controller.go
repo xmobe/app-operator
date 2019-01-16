@@ -46,6 +46,7 @@ func Add(mgr manager.Manager) error {
 	_, err := components.NewReconciler("odooversion.controller", mgr, &clusterv1beta1.OdooVersion{}, Templates, []components.Component{
 		// Set default values.
 		// odooversioncomponents.NewDefaults(),
+		odooversioncomponents.NewMeta(),
 
 		// Set Top-level components
 		odooversioncomponents.NewConfigMap("configmap.yml.tpl"),

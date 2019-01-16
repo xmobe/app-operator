@@ -39,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
-	instancev1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/instance/v1beta1"
 )
 
 type metaComponent struct{}
@@ -52,25 +51,14 @@ func (*metaComponent) IsReconcilable(_ *components.ComponentContext) bool { retu
 
 func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 
-	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-	listObj := &clusterv1beta1.OdooVersionList{}
-	res, obj, err := ctx.GetOne(listObj, map[string]string{
-		"cluster.odoo.io/name":      instance.Spec.Cluster,
-		"app.kubernetes.io/version": instance.Spec.Version,
-	})
-	if err != nil {
-		return res, err
-	}
-	odooVersion := obj.(*clusterv1beta1.OdooVersion)
-
-	res, _, err = ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
+	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
+	res, _, err := ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
 		goalMeta.Labels = map[string]string{
 			"cluster.odoo.io/name":         instance.Spec.Cluster,
-			"cluster.odoo.io/track":        fmt.Sprintf("%v", odooVersion.Spec.Track),
-			"instance.odoo.io/hostname":    instance.Spec.Hostname,
-			"app.kubernetes.io/name":       "odooinstance",
+			"cluster.odoo.io/track":        fmt.Sprintf("%v", instance.Spec.Track),
+			"app.kubernetes.io/name":       "odooversion",
 			"app.kubernetes.io/instance":   instance.Name,
-			"app.kubernetes.io/component":  "app",
+			"app.kubernetes.io/component":  "cluster",
 			"app.kubernetes.io/managed-by": "odoo-operator",
 			"app.kubernetes.io/version":    instance.Spec.Version,
 		}
