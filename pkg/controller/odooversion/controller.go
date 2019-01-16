@@ -52,11 +52,11 @@ func Add(mgr manager.Manager) error {
 
 		// Web Server components (app.kubernetes.io/component = web)
 		odooversioncomponents.NewDeployment("web/deployment.yml.tpl"),
-		// odooversioncomponents.NewService("web/service.yml.tpl"),
+		odooversioncomponents.NewService("web/service.yml.tpl"),
 
 		// Longpolling components (app.kubernetes.io/component = longpolling)
 		odooversioncomponents.NewDeployment("longpolling/deployment.yml.tpl"),
-		// odooversioncomponents.NewService("longpolling/service.yml.tpl"),
+		odooversioncomponents.NewService("longpolling/service.yml.tpl"),
 
 		// Cron components (app.kubernetes.io/component = cron)
 		odooversioncomponents.NewDeployment("cron/deployment.yml.tpl"),

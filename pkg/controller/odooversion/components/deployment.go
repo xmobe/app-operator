@@ -45,8 +45,8 @@ func NewDeployment(templatePath string) *deploymentComponent {
 	return &deploymentComponent{templatePath: templatePath}
 }
 
-// +kubebuilder:rbac:groups=,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
 func (_ *deploymentComponent) WatchTypes() []runtime.Object {
 	return []runtime.Object{
 		&appsv1.Deployment{},

@@ -2,7 +2,7 @@
 metadata:
   name: {{ block "componentType" . }}{{ end }}-{{ .Instance.Spec.Version | replace "." "-" }}-{{ block "componentName" . }}{{ end }}
   namespace: {{ .Instance.Namespace }}
-  labels:
+  labels: &metadatalabels
     cluster.odoo.io/name: {{ .Instance.Spec.Cluster | quote }}
     cluster.odoo.io/track: {{ .Instance.Spec.Track | quote }}
     app.kubernetes.io/name: {{ block "componentName" . }}{{ end }}

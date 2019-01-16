@@ -32,99 +32,43 @@ package components
 
 import (
 	"github.com/blaggacao/ridecell-operator/pkg/components"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	// clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
-	instancev1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/instance/v1beta1"
 )
 
-type ingressComponent struct {
+type serviceComponent struct {
 	templatePath string
 }
 
-func NewIngress(templatePath string) *ingressComponent {
-	return &ingressComponent{templatePath: templatePath}
+func NewService(templatePath string) *serviceComponent {
+	return &serviceComponent{templatePath: templatePath}
 }
 
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
-func (_ *ingressComponent) WatchTypes() []runtime.Object {
+// +kubebuilder:rbac:groups=,resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=services/status,verbs=get;update;patch
+func (_ *serviceComponent) WatchTypes() []runtime.Object {
 	return []runtime.Object{
 		// Todo own OdooInstances by the cluster on creation
-		&instancev1beta1.OdooInstance{},
+		&corev1.Service{},
 	}
 }
 
-func (_ *ingressComponent) IsReconcilable(ctx *components.ComponentContext) bool {
-	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-	createdCondition := instance.GetStatusCondition(instancev1beta1.OdooInstanceStatusConditionTypeCreated)
-	if createdCondition.Status != corev1.ConditionTrue {
-		// The instance is not created, yet
-		return false
-	}
-	migratedCondition := instance.GetStatusCondition(instancev1beta1.OdooInstanceStatusConditionTypeMigrated)
-	if migratedCondition != nil && migratedCondition.Status != corev1.ConditionTrue {
-		// The instance migration has not terminated, yet
-		return false
-	}
+func (_ *serviceComponent) IsReconcilable(_ *components.ComponentContext) bool {
 	return true
 }
 
-func (comp *ingressComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-	obj, err := ctx.GetTemplate(comp.templatePath, nil)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	job := obj.(*batchv1.Job)
-	instance := ctx.Top.(*instancev1beta1.OdooInstance)
+func (comp *serviceComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
+	// Set up the extra data map for the template.
+	extra := map[string]interface{}{}
+	extra["ConfigFile"] = "ok"
 
-	existing := &batchv1.Job{}
-	err = ctx.Get(ctx.Context, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, existing)
-	if err != nil && errors.IsNotFound(err) {
-		ctx.Logger.V(1).Info("creating copier job")
-
-		// Launching the job
-		err = controllerutil.SetControllerReference(instance, job, ctx.Scheme)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		err = ctx.Create(ctx.Context, job)
-		if err != nil {
-			// If this fails, someone else might have started a copier job between the Get and here, so just try again.
-			return reconcile.Result{Requeue: true}, err
-		}
-		// Job is started, so we're done for now.
-		return reconcile.Result{}, nil
-	} else if err != nil {
-		// Some other real error, bail.
-		return reconcile.Result{}, err
-	}
-
-	// If we get this far, the job previously started at some point and might be done.
-	// Check if the job succeeded.
-	if existing.Status.Succeeded > 0 {
-		// Success! Update the corresponding OdooInstanceStatusCondition and delete the job.
-
-		ctx.Logger.V(1).Info("deleting sucessful creating copier job")
-		err = ctx.Delete(ctx.Context, existing, client.PropagationPolicy(metav1.DeletePropagationBackground))
-		if err != nil {
-			return reconcile.Result{Requeue: true}, err
-		}
-	}
-
-	// ... Or if the job failed.
-	if existing.Status.Failed > 0 {
-		ctx.Logger.V(1).Info("leaving failed job for debugging")
-	}
-
-	// Job is still running, will get reconciled when it finishes.
-	return reconcile.Result{}, nil
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+		goal := goalObj.(*corev1.Service)
+		existing := existingObj.(*corev1.Service)
+		// Copy the configuration Data over.
+		existing.Spec = goal.Spec
+		return nil
+	})
+	return res, err
 }
