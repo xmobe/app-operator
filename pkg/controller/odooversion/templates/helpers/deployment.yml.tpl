@@ -33,7 +33,7 @@ spec:
         supplementalGroups: [2000]
       containers:
       - name: default
-        image: {{ .Extra.Image }}:base-{{ .Instance.Spec.Version }}
+        image: {{ .Extra.Image }}:base-{{ .Instance.Spec.Track }}-{{ .Instance.Spec.Version }}
         imagePullPolicy: Always
         args:
         {{ block "deploymentArgs" . }}{{ end }}

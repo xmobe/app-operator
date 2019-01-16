@@ -19,7 +19,7 @@ spec: &jobspec
         supplementalGroups: [2000]
       containers:
       - name: default
-        image: {{ .Extra.Image }}:devops-{{ .Instance.Spec.Version }}
+        image: {{ .Extra.Image }}:devops-{{ .Extra.Track }}-{{ .Instance.Spec.Version }}
         imagePullPolicy: Always
         args:
         {{ block "jobArgs" . }}{{ end }}
