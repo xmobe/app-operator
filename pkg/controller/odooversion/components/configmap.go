@@ -64,11 +64,39 @@ func (_ *configmapComponent) IsReconcilable(_ *components.ComponentContext) bool
 }
 
 func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-	// instance := ctx.Top.(*clusterv1beta1.OdooVersion)
-	// trackinstance := nil
-	// clusterinstance := nil
+	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
+
+	// Fetch OdooCluster
+	listObjCluster := &clusterv1beta1.OdooClusterList{}
+	res, obj, err := ctx.GetOne(listObjCluster, map[string]string{
+		"cluster.odoo.io/name": instance.Labels["cluster.odoo.io/name"],
+	})
+	if err != nil || obj == nil {
+		return res, err
+	}
+	clusterinstance := obj.(*clusterv1beta1.OdooCluster)
+
+	// Fetch OdooTrack
+	listObjTrack := &clusterv1beta1.OdooTrackList{}
+	res, obj, err = ctx.GetOne(listObjTrack, map[string]string{
+		"cluster.odoo.io/name":  instance.Labels["cluster.odoo.io/name"],
+		"cluster.odoo.io/track": instance.Labels["cluster.odoo.io/track"],
+	})
+	if err != nil || obj == nil {
+		return res, err
+	}
+	trackinstance := obj.(*clusterv1beta1.OdooTrack)
 
 	mergedConfig := map[string]clusterv1beta1.ConfigValue{}
+	for k, v := range clusterinstance.Spec.Config {
+		mergedConfig[k] = v
+	}
+	for k, v := range trackinstance.Spec.Config {
+		mergedConfig[k] = v
+	}
+	for k, v := range instance.Spec.Config {
+		mergedConfig[k] = v
+	}
 
 	// Create config.ini
 	cfg := ini.Empty()
@@ -80,7 +108,7 @@ func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (rec
 	extra := map[string]interface{}{}
 	extra["ConfigFile"] = buf.String()
 
-	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err = ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.ConfigMap)
 		existing := existingObj.(*corev1.ConfigMap)
 		// Copy the configuration Data over.

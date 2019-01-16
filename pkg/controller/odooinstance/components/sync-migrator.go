@@ -31,8 +31,6 @@
 package components
 
 import (
-	"fmt"
-
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -75,33 +73,17 @@ func (_ *synchMigratorComponent) IsReconcilable(ctx *components.ComponentContext
 		return false
 	}
 	// Get the parent instance ...
-
-	parentinstances := &instancev1beta1.OdooInstanceList{}
-
-	// Set up the extra data map for the template.
-	listoptions := client.InNamespace(instance.Namespace)
-	listoptions.MatchingLabels(map[string]string{
+	listObj := &instancev1beta1.OdooInstanceList{}
+	_, obj, err := ctx.GetOne(listObj, map[string]string{
 		"cluster.odoo.io/name":      instance.Labels["cluster.odoo.io/name"],
 		"instance.odoo.io/hostname": *instance.Spec.ParentHostname,
 	})
-	err := ctx.List(ctx.Context, listoptions, parentinstances)
-	if err != nil {
-		err := fmt.Errorf("call to ctx.List failed")
-		ctx.Logger.Error(err, "failed", "odoo instance", instance)
+	if err != nil || obj == nil {
 		return false
 	}
+	parentInstance := obj.(*instancev1beta1.OdooInstance)
 
-	if len(parentinstances.Items) > 1 {
-		err := fmt.Errorf("more than one parent instance found")
-		ctx.Logger.Error(err, "failed", "odoo instance", instance)
-		return false
-	} else if len(parentinstances.Items) < 1 {
-		err := fmt.Errorf("no parent instance found")
-		ctx.Logger.Error(err, "failed", "odoo instance", instance)
-		return false
-	}
-
-	if instance.Spec.Version == parentinstances.Items[0].Spec.Version {
+	if instance.Spec.Version == parentInstance.Spec.Version {
 		// ... and apply only if there is an explicit version bump over the parent instance
 		// TODO: Ensure version order
 		return false

@@ -31,13 +31,10 @@
 package components
 
 import (
-	"fmt"
-
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -76,32 +73,22 @@ func (_ *backuperComponent) IsReconcilable(ctx *components.ComponentContext) boo
 
 func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-	parentinstances := &instancev1beta1.OdooInstanceList{}
 
 	// Set up the extra data map for the template.
-	listoptions := client.InNamespace(instance.Namespace)
-	listoptions.MatchingLabels(map[string]string{
+	listObj := &instancev1beta1.OdooInstanceList{}
+
+	res, obj, err := ctx.GetOne(listObj, map[string]string{
 		"cluster.odoo.io/name":      instance.Labels["cluster.odoo.io/name"],
 		"instance.odoo.io/hostname": *instance.Spec.ParentHostname,
 	})
-	err := ctx.List(ctx.Context, listoptions, parentinstances)
-	if err != nil {
-		return reconcile.Result{}, err
+	if err != nil || obj == nil {
+		return res, err
 	}
-	if len(parentinstances.Items) > 1 {
-		err := fmt.Errorf("more than one parent instance found")
-		ctx.Logger.Error(err, "failed", "odoo instance", instance)
-		return reconcile.Result{}, err
-	} else if len(parentinstances.Items) < 1 {
-		err := fmt.Errorf("no parent instance found")
-		ctx.Logger.Error(err, "failed", "odoo instance", instance)
-		return reconcile.Result{Requeue: true}, err
-	}
-
+	parentInstance := obj.(*instancev1beta1.OdooInstance)
 	extra := map[string]interface{}{}
-	extra["FromDatabase"] = string(parentinstances.Items[0].Spec.Hostname)
+	extra["FromDatabase"] = string(parentInstance.Spec.Hostname)
 
-	obj, err := ctx.GetTemplate(comp.templatePath, extra)
+	obj, err = ctx.GetTemplate(comp.templatePath, extra)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

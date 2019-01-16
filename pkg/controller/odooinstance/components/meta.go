@@ -58,7 +58,7 @@ func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Res
 		"cluster.odoo.io/name":      instance.Spec.Cluster,
 		"app.kubernetes.io/version": instance.Spec.Version,
 	})
-	if err != nil {
+	if err != nil || obj == nil {
 		return res, err
 	}
 	odooVersion := obj.(*clusterv1beta1.OdooVersion)
