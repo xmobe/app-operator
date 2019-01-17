@@ -31,12 +31,13 @@
 package components
 
 import (
-	"github.com/blaggacao/ridecell-operator/pkg/components"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
+	"github.com/blaggacao/ridecell-operator/pkg/components"
 )
 
 type persistentVolumeClaimComponent struct {
@@ -55,23 +56,34 @@ func (_ *persistentVolumeClaimComponent) WatchTypes() []runtime.Object {
 	}
 }
 
-func (_ *persistentVolumeClaimComponent) IsReconcilable(ctx *components.ComponentContext) bool {
-	instance := ctx.Top.(*clusterv1beta1.OdooCluster)
-	if !instance.ObjectMeta.CreationTimestamp.IsZero() {
-		// PersistentVaolumeClaims are immutable after creation
+func (comp *persistentVolumeClaimComponent) IsReconcilable(ctx *components.ComponentContext) bool {
+	// PersistentVaolumeClaims are immutable after creation
+	// TODO: Forbidden: is immutable after creation except resources.requests for bound claims"
+	obj, err := ctx.GetTemplate(comp.templatePath, nil)
+	if err != nil {
 		return false
 	}
-	return true
+	fetchObj := obj.(*corev1.PersistentVolumeClaim)
+
+	err = ctx.Get(ctx.Context, types.NamespacedName{Name: fetchObj.Name, Namespace: fetchObj.Namespace}, fetchObj)
+	if err != nil && errors.IsNotFound(err) {
+		return true
+	}
+	return false
 }
 
 func (comp *persistentVolumeClaimComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	extra := map[string]interface{}{}
 	extra["VolumeSpec"] = "ok"
 	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
-		goal := goalObj.(*corev1.ConfigMap)
-		existing := existingObj.(*corev1.ConfigMap)
-		// Copy the configuration Data over.
-		existing.Data = goal.Data
+		goal := goalObj.(*corev1.PersistentVolumeClaim)
+		existing := existingObj.(*corev1.PersistentVolumeClaim)
+		// Copy the Spec over.
+		if &existing.Spec != nil {
+			existing.Spec = goal.Spec
+		} else {
+			existing.Spec = corev1.PersistentVolumeClaimSpec{}
+		}
 		return nil
 	})
 	return res, err
