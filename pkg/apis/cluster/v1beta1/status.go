@@ -101,68 +101,18 @@ func (c *OdooCluster) filterOutCondition(condType OdooClusterStatusConditionType
 	return newConditions
 }
 
-// // OdooTrack Status ...
-// func (t *OdooTrack) GetStatus() components.Status {
-// 	return t.Status
-// }
+// OdooTrack Status ...
+func (t *OdooTrack) GetStatus() components.Status {
+	return t.Status
+}
 
-// func (t *OdooTrack) SetStatus(status components.Status) {
-// 	t.Status = status.(OdooTrackStatus)
-// }
-// func (s *OdooTrack) SetErrorStatus(errorMsg string) {
-// 	// t.Status.Status = StatusError
-// 	// t.Status.Message = errorMsg
-// }
-
-// func (_ *OdooTrack) NewStatusCondition(
-// 	condType OdooClusterStatusConditionType, status corev1.ConditionStatus,
-// 	reason, message string) *OdooClusterStatusCondition {
-// 	return &OdooClusterStatusCondition{condType, StatusCondition{
-// 		Status:             status,
-// 		LastTransitionTime: metav1.Now(),
-// 		Reason:             reason,
-// 		Message:            message,
-// 	}}
-// }
-
-// func (t *OdooTrack) GetStatusCondition(
-// 	condType OdooClusterStatusConditionType) *OdooClusterStatusCondition {
-// 	for i := range t.Status.Conditions {
-// 		cond := t.Status.Conditions[i]
-// 		if cond.Type == condType {
-// 			return &cond
-// 		}
-// 	}
-// 	return nil
-// }
-
-// func (t *OdooTrack) SetStatusCondition(condition OdooClusterStatusCondition) {
-// 	currentCond := t.GetStatusCondition(condition.Type)
-// 	if currentCond != nil && currentCond.Status == condition.Status && currentCond.Reason == condition.Reason {
-// 		return
-// 	}
-// 	// Do not update lastTransitionTime if the status of the condition doesn't change.
-// 	if currentCond != nil && currentCond.Status == condition.Status {
-// 		condition.LastTransitionTime = currentCond.LastTransitionTime
-// 	}
-// 	newConditions := t.filterOutCondition(condition.Type)
-// 	t.Status.Conditions = append(newConditions, condition)
-// }
-
-// func (t *OdooTrack) RemoveStatusCondition(condType OdooClusterStatusConditionType) {
-// 	t.Status.Conditions = t.filterOutCondition(condType)
-// }
-
-// func (t *OdooTrack) filterOutCondition(condType OdooClusterStatusConditionType) []OdooClusterStatusCondition {
-// 	var newConditions []OdooClusterStatusCondition
-// 	for _, cond := range t.Status.Conditions {
-// 		if cond.Type == condType {
-// 			continue
-// 		}
-// 		newConditions = append(newConditions, cond)
-// 	}
-// 	return newConditions
-// }
+func (t *OdooTrack) SetStatus(status components.Status) {
+	t.Status = status.(OdooTrackStatus)
+}
+func (s *OdooTrack) SetErrorStatus(errorMsg string) {
+	// t.Status.Status = StatusError
+	// t.Status.Message = errorMsg
+}
 
 // OdooVersion Status ...
 func (v *OdooVersion) GetStatus() components.Status {

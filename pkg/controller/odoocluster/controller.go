@@ -57,6 +57,9 @@ func Add(mgr manager.Manager) error {
 		// Routing components
 		odooclustercomponents.NewIngress("ingress.yml.tpl"),
 
+		// Tracks
+		odooclustercomponents.NewOdooTrack("odootrack.yml.tpl"),
+
 		// Remover acting upon finalizers of deleted instances
 		// odooclustercomponents.NewRemover(),
 	})

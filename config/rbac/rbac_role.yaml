@@ -37,7 +37,7 @@ rules:
   - update
   - patch
 - apiGroups:
-  - appscluster.odoo.io
+  - cluster.odoo.io
   resources:
   - dbnamespaces
   verbs:
@@ -49,7 +49,7 @@ rules:
   - patch
   - delete
 - apiGroups:
-  - appscluster.odoo.io
+  - cluster.odoo.io
   resources:
   - dbnamespaces/status
   verbs:
@@ -92,6 +92,26 @@ rules:
   - instance.odoo.io
   resources:
   - odooinstances/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - cluster.odoo.io
+  resources:
+  - odootracks
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.odoo.io
+  resources:
+  - odootracks/status
   verbs:
   - get
   - update
@@ -277,26 +297,6 @@ rules:
   - update
   - patch
 - apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - services/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
   - apps
   resources:
   - deployments
@@ -312,6 +312,26 @@ rules:
   - apps
   resources:
   - deployments/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - services/status
   verbs:
   - get
   - update
