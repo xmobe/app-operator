@@ -67,7 +67,12 @@ func (comp *serviceComponent) Reconcile(ctx *components.ComponentContext) (recon
 		goal := goalObj.(*corev1.Service)
 		existing := existingObj.(*corev1.Service)
 		// Copy the configuration Data over.
+		existingClusterIP := existing.Spec.ClusterIP
 		existing.Spec = goal.Spec
+		// ClusterIP is immutable after creation
+		if !existing.ObjectMeta.CreationTimestamp.IsZero() {
+			existing.Spec.ClusterIP = existingClusterIP
+		}
 		return nil
 	})
 	return res, err
