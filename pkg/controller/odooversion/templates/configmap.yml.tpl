@@ -4,4 +4,5 @@ apiVersion: v1
 kind: ConfigMap
 {{- template "metadata" . -}}
 data:
-  app-config: text
+  app-config: |
+{{ .Extra.ConfigFile | indent 4}}

@@ -88,25 +88,19 @@ func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (rec
 	}
 
 	mergedConfig := map[string]clusterv1beta1.ConfigValue{}
-	for k, v := range clusterinstance.Spec.Config {
-		mergedConfig[k] = v
-	}
-	for k, v := range trackinstance.Spec.Config {
-		mergedConfig[k] = v
-	}
-	for k, v := range instance.Spec.Config {
-		mergedConfig[k] = v
-	}
+	mergeConfig(mergedConfig, clusterinstance.Spec.Config)
+	mergeConfig(mergedConfig, trackinstance.Spec.Config)
+	mergeConfig(mergedConfig, instance.Spec.Config)
 
 	// Create config.ini
 	cfg := ini.Empty()
-	marshallConfig(cfg, mergedConfig, "")
-	var buf bytes.Buffer
-	cfg.WriteTo(&buf)
+	marshalConfig(cfg, mergedConfig, "")
+	var b bytes.Buffer
+	cfg.WriteTo(&b)
 
 	// Set up the extra data map for the template.
 	extra := map[string]interface{}{}
-	extra["ConfigFile"] = buf.String()
+	extra["ConfigFile"] = b.String()
 
 	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.ConfigMap)
@@ -118,13 +112,33 @@ func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (rec
 	return res, err
 }
 
-func marshallConfig(cfg *ini.File, config map[string]clusterv1beta1.ConfigValue, section string) {
-	for key, cfgValue := range config {
-		if cfgValue.Section != nil {
-			marshallConfig(cfg, cfgValue.Section, section+":"+key)
+func marshalConfig(cfg *ini.File, config map[string]clusterv1beta1.ConfigValue, section string) {
+	for k, v := range config {
+		if v.Section != nil {
+			sectionKey := k
+			if section != "" {
+				sectionKey = section + ":" + k
+			}
+			marshalConfig(cfg, v.Section, sectionKey)
 		} else {
-			cfg.Section(section).NewKey(key, cfgValue.ToString())
+			cfg.Section(section).NewKey(k, v.ToString())
 		}
 	}
 
+}
+
+func mergeConfig(targetConfig, sourceConfig map[string]clusterv1beta1.ConfigValue) {
+	for k, v := range sourceConfig {
+		if v.Section != nil {
+			_, ok := targetConfig[k]
+			if !ok {
+				targetConfig[k] = clusterv1beta1.ConfigValue{
+					Section: map[string]clusterv1beta1.ConfigValue{},
+				}
+			}
+			mergeConfig(targetConfig[k].Section, v.Section)
+		} else {
+			targetConfig[k] = v
+		}
+	}
 }

@@ -14,9 +14,11 @@ limitations under the License.
 package v1beta1
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"errors"
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 // Intercept JSON decoding and try to deal with "simple" values before giving
@@ -47,7 +49,6 @@ func (v *ConfigValue) UnmarshalJSON(data []byte) error {
 }
 
 func (v *ConfigValue) unmarshalValue(tmp interface{}) bool {
-
 	boolVal, ok := tmp.(bool)
 	if ok {
 		v.Bool = &boolVal
@@ -78,9 +79,25 @@ func (v *ConfigValue) unmarshalValue(tmp interface{}) bool {
 			v.Section[k] = *val
 		}
 		return true
-
 	}
 	return false
+}
+
+// MarshalJSON implements the json.Marshaller interface.
+func (v ConfigValue) MarshalJSON() ([]byte, error) {
+	if v.Bool != nil {
+		return json.Marshal(v.Bool)
+	} else if v.Int != nil {
+		return json.Marshal(v.Int)
+	} else if v.Float != nil {
+		return json.Marshal(v.Float)
+	} else if v.String != nil {
+		return json.Marshal(v.String)
+	} else if v.Section != nil {
+		return json.Marshal(v.Section)
+	} else {
+		panic("MarshalJSON: Unknown ConfigValue type")
+	}
 }
 
 // Run the reverse, convert the union back into an interface{} for use in JSON
