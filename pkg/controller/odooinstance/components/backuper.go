@@ -78,8 +78,8 @@ func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reco
 	listObj := &instancev1beta1.OdooInstanceList{}
 
 	res, obj, err := ctx.GetOne(listObj, map[string]string{
-		"cluster.odoo.io/name":      instance.Labels["cluster.odoo.io/name"],
-		"instance.odoo.io/hostname": *instance.Spec.ParentHostname,
+		"cluster.odoo.io/part-of-cluster": instance.Labels["cluster.odoo.io/part-of-cluster"],
+		"instance.odoo.io/hostname":       *instance.Spec.ParentHostname,
 	})
 	if err != nil || obj == nil {
 		return res, err

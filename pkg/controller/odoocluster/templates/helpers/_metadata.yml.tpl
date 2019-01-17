@@ -9,4 +9,5 @@ metadata:
     app.kubernetes.io/managed-by: odoo-operator
     app.kubernetes.io/part-of: {{ .Instance.Name | quote }}
     app.kubernetes.io/version: NA
+    app.kubernetes.io/track: NA
 {{ end -}}
