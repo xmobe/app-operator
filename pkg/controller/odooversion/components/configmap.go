@@ -37,6 +37,7 @@ import (
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
@@ -67,25 +68,24 @@ func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (rec
 	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
 
 	// Fetch OdooCluster
-	listObjCluster := &clusterv1beta1.OdooClusterList{}
-	res, obj, err := ctx.GetOne(listObjCluster, map[string]string{
-		"cluster.odoo.io/name": instance.Labels["cluster.odoo.io/name"],
-	})
-	if err != nil || obj == nil {
-		return res, err
+	clusterinstance := &clusterv1beta1.OdooCluster{}
+	err := ctx.Get(ctx.Context, client.ObjectKey{
+		Name:      instance.Labels["cluster.odoo.io/part-of-cluster"],
+		Namespace: instance.GetNamespace(),
+	}, clusterinstance)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
-	clusterinstance := obj.(*clusterv1beta1.OdooCluster)
 
 	// Fetch OdooTrack
-	listObjTrack := &clusterv1beta1.OdooTrackList{}
-	res, obj, err = ctx.GetOne(listObjTrack, map[string]string{
-		"cluster.odoo.io/name":  instance.Labels["cluster.odoo.io/name"],
-		"cluster.odoo.io/track": instance.Labels["cluster.odoo.io/track"],
-	})
-	if err != nil || obj == nil {
-		return res, err
+	trackinstance := &clusterv1beta1.OdooTrack{}
+	err = ctx.Get(ctx.Context, client.ObjectKey{
+		Name:      instance.Labels["cluster.odoo.io/part-of-track"],
+		Namespace: instance.GetNamespace(),
+	}, trackinstance)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
-	trackinstance := obj.(*clusterv1beta1.OdooTrack)
 
 	mergedConfig := map[string]clusterv1beta1.ConfigValue{}
 	for k, v := range clusterinstance.Spec.Config {
@@ -108,7 +108,7 @@ func (comp *configmapComponent) Reconcile(ctx *components.ComponentContext) (rec
 	extra := map[string]interface{}{}
 	extra["ConfigFile"] = buf.String()
 
-	res, _, err = ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.ConfigMap)
 		existing := existingObj.(*corev1.ConfigMap)
 		// Copy the configuration Data over.

@@ -75,8 +75,8 @@ func (_ *synchMigratorComponent) IsReconcilable(ctx *components.ComponentContext
 	// Get the parent instance ...
 	listObj := &instancev1beta1.OdooInstanceList{}
 	_, obj, err := ctx.GetOne(listObj, map[string]string{
-		"cluster.odoo.io/name":      instance.Labels["cluster.odoo.io/name"],
-		"instance.odoo.io/hostname": *instance.Spec.ParentHostname,
+		"cluster.odoo.io/part-of-cluster": instance.Labels["cluster.odoo.io/part-of-cluster"],
+		"app.kubernetes.io/instance":      instance.Labels["instance.odoo.io/part-of-instance"],
 	})
 	if err != nil || obj == nil {
 		return false

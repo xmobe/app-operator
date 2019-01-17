@@ -53,10 +53,31 @@ func (*metaComponent) IsReconcilable(_ *components.ComponentContext) bool { retu
 func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
+
+	versionStr := &instance.Spec.Version
+	partOfInstance := ""
+	// Fetch parent OdooInstance, if any
+	if instance.Spec.ParentHostname != nil {
+		listObj := &instancev1beta1.OdooInstanceList{}
+		res, obj, err := ctx.GetOne(listObj, map[string]string{
+			"cluster.odoo.io/part-of-cluster": instance.Spec.Cluster,
+			"instance.odoo.io/hostname":       *instance.Spec.ParentHostname,
+		})
+		if err != nil || obj == nil {
+			return res, err
+		}
+		parentInstance := obj.(*instancev1beta1.OdooInstance)
+		if versionStr == nil {
+			versionStr = &parentInstance.Spec.Version
+		}
+		partOfInstance = parentInstance.Name
+	}
+
+	// Fetch OdooVersion
 	listObj := &clusterv1beta1.OdooVersionList{}
 	res, obj, err := ctx.GetOne(listObj, map[string]string{
-		"cluster.odoo.io/name":      instance.Spec.Cluster,
-		"app.kubernetes.io/version": instance.Spec.Version,
+		"cluster.odoo.io/part-of-cluster": instance.Spec.Cluster,
+		"app.kubernetes.io/version":       *versionStr,
 	})
 	if err != nil || obj == nil {
 		return res, err
@@ -65,14 +86,18 @@ func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Res
 
 	res, _, err = ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
 		goalMeta.Labels = map[string]string{
-			"cluster.odoo.io/name":         instance.Spec.Cluster,
-			"cluster.odoo.io/track":        fmt.Sprintf("%v", odooVersion.Spec.Track),
-			"instance.odoo.io/hostname":    instance.Spec.Hostname,
-			"app.kubernetes.io/name":       "odooinstance",
-			"app.kubernetes.io/instance":   instance.Name,
-			"app.kubernetes.io/component":  "app",
-			"app.kubernetes.io/managed-by": "odoo-operator",
-			"app.kubernetes.io/version":    instance.Spec.Version,
+			"cluster.odoo.io/part-of-cluster":   instance.Spec.Cluster,
+			"cluster.odoo.io/part-of-track":     odooVersion.Labels["cluster.odoo.io/part-of-track"],
+			"cluster.odoo.io/part-of-version":   odooVersion.Name,
+			"instance.odoo.io/part-of-instance": partOfInstance,
+			"instance.odoo.io/hostname":         instance.Spec.Hostname,
+			"app.kubernetes.io/name":            "instance",
+			"app.kubernetes.io/instance":        instance.Name,
+			"app.kubernetes.io/component":       "operator",
+			"app.kubernetes.io/managed-by":      "odoo-operator",
+			"app.kubernetes.io/version":         *versionStr,
+			"app.kubernetes.io/part-of":         partOfInstance,
+			"app.kubernetes.io/track":           fmt.Sprintf("%v", odooVersion.Spec.Track),
 		}
 		return nil
 	})

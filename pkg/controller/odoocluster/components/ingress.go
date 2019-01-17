@@ -91,7 +91,7 @@ func (comp *ingressComponent) Reconcile(ctx *components.ComponentContext) (recon
 	odooInstanceList := &instancev1beta1.OdooInstanceList{}
 	listoptions := client.InNamespace(instance.Namespace)
 	listoptions.MatchingLabels(map[string]string{
-		"cluster.odoo.io/name": instance.Name,
+		"cluster.odoo.io/part-of-cluster": instance.Name,
 	})
 	err := ctx.List(ctx.Context, listoptions, odooInstanceList)
 	if err != nil {

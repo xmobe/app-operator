@@ -52,15 +52,27 @@ func (*metaComponent) IsReconcilable(_ *components.ComponentContext) bool { retu
 func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 
 	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
-	res, _, err := ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
+	// Fetch OdooTrack
+	listObjTrack := &clusterv1beta1.OdooTrackList{}
+	res, obj, err := ctx.GetOne(listObjTrack, map[string]string{
+		"cluster.odoo.io/part-of-cluster": instance.Spec.Cluster,
+		"app.kubernetes.io/track":         fmt.Sprintf("%v", instance.Spec.Track),
+	})
+	if err != nil || obj == nil {
+		return res, err
+	}
+	odooTrack := obj.(*clusterv1beta1.OdooTrack)
+	res, _, err = ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
 		goalMeta.Labels = map[string]string{
-			"cluster.odoo.io/name":         instance.Spec.Cluster,
-			"cluster.odoo.io/track":        fmt.Sprintf("%v", instance.Spec.Track),
-			"app.kubernetes.io/name":       "odooversion",
-			"app.kubernetes.io/instance":   instance.Name,
-			"app.kubernetes.io/component":  "cluster",
-			"app.kubernetes.io/managed-by": "odoo-operator",
-			"app.kubernetes.io/version":    instance.Spec.Version,
+			"cluster.odoo.io/part-of-cluster": instance.Spec.Cluster,
+			"cluster.odoo.io/part-of-track":   odooTrack.Name,
+			"app.kubernetes.io/name":          "version",
+			"app.kubernetes.io/instance":      instance.Name,
+			"app.kubernetes.io/component":     "operator",
+			"app.kubernetes.io/managed-by":    "odoo-operator",
+			"app.kubernetes.io/version":       instance.Spec.Version,
+			"app.kubernetes.io/part-of":       odooTrack.Name,
+			"app.kubernetes.io/track":         fmt.Sprintf("%v", instance.Spec.Track),
 		}
 		return nil
 	})

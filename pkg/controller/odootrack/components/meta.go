@@ -58,13 +58,13 @@ func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Res
 	instance := ctx.Top.(*clusterv1beta1.OdooTrack)
 	res, _, err := ctx.UpdateTopMeta(func(goalMeta *metav1.ObjectMeta) error {
 		goalMeta.Labels = map[string]string{
-			"cluster.odoo.io/name":         *clusterName,
-			"cluster.odoo.io/track":        fmt.Sprintf("%v", instance.Spec.Track),
-			"app.kubernetes.io/name":       "odootrack",
-			"app.kubernetes.io/instance":   instance.Name,
-			"app.kubernetes.io/component":  "cluster",
-			"app.kubernetes.io/managed-by": "odoo-operator",
-			"app.kubernetes.io/version":    "NA",
+			"cluster.odoo.io/part-of-cluster": *clusterName,
+			"app.kubernetes.io/name":          "track",
+			"app.kubernetes.io/instance":      instance.Name,
+			"app.kubernetes.io/component":     "operator",
+			"app.kubernetes.io/managed-by":    "odoo-operator",
+			"app.kubernetes.io/part-of":       *clusterName,
+			"app.kubernetes.io/track":         fmt.Sprintf("%v", instance.Spec.Track),
 		}
 		return nil
 	})

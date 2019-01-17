@@ -76,20 +76,11 @@ func (_ *copierComponent) IsReconcilable(ctx *components.ComponentContext) bool 
 
 func (comp *copierComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-	// Set up the extra data map for the template.
-	listObj := &instancev1beta1.OdooInstanceList{}
-	res, obj, err := ctx.GetOne(listObj, map[string]string{
-		"cluster.odoo.io/name":      instance.Labels["cluster.odoo.io/name"],
-		"instance.odoo.io/hostname": *instance.Spec.ParentHostname,
-	})
-	if err != nil || obj == nil {
-		return res, err
-	}
-	parentInstance := obj.(*instancev1beta1.OdooInstance)
-	extra := map[string]interface{}{}
-	extra["FromDatabase"] = string(parentInstance.Spec.Hostname)
 
-	obj, err = ctx.GetTemplate(comp.templatePath, extra)
+	extra := map[string]interface{}{}
+	extra["FromDatabase"] = string(*instance.Spec.ParentHostname)
+
+	obj, err := ctx.GetTemplate(comp.templatePath, extra)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
