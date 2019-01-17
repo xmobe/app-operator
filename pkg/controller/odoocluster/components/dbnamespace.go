@@ -46,8 +46,8 @@ func NewDBNamespace(templatePath string) *dbNamespaceComponent {
 	return &dbNamespaceComponent{templatePath: templatePath}
 }
 
-// +kubebuilder:rbac:groups=appscluster.odoo.io,resources=dbnamespaces,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=appscluster.odoo.io,resources=dbnamespaces/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cluster.odoo.io,resources=dbnamespaces,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cluster.odoo.io,resources=dbnamespaces/status,verbs=get;update;patch
 func (_ *dbNamespaceComponent) WatchTypes() []runtime.Object {
 	return []runtime.Object{
 		&clusterv1beta1.DBNamespace{},
