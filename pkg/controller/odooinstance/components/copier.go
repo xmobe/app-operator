@@ -76,9 +76,8 @@ func (_ *copierComponent) IsReconcilable(ctx *components.ComponentContext) bool 
 
 func (comp *copierComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-
 	extra := map[string]interface{}{}
-	extra["FromDatabase"] = string(*instance.Spec.ParentHostname)
+	extra["Track"] = instance.Labels["cluster.odoo.io/part-of-track"]
 
 	obj, err := ctx.GetTemplate(comp.templatePath, extra)
 	if err != nil {

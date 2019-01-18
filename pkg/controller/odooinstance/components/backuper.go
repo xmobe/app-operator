@@ -73,22 +73,10 @@ func (_ *backuperComponent) IsReconcilable(ctx *components.ComponentContext) boo
 
 func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-
-	// Set up the extra data map for the template.
-	listObj := &instancev1beta1.OdooInstanceList{}
-
-	res, obj, err := ctx.GetOne(listObj, map[string]string{
-		"cluster.odoo.io/part-of-cluster": instance.Labels["cluster.odoo.io/part-of-cluster"],
-		"instance.odoo.io/hostname":       *instance.Spec.ParentHostname,
-	})
-	if err != nil || obj == nil {
-		return res, err
-	}
-	parentInstance := obj.(*instancev1beta1.OdooInstance)
 	extra := map[string]interface{}{}
-	extra["FromDatabase"] = string(parentInstance.Spec.Hostname)
+	extra["Track"] = instance.Labels["cluster.odoo.io/part-of-track"]
 
-	obj, err = ctx.GetTemplate(comp.templatePath, extra)
+	obj, err := ctx.GetTemplate(comp.templatePath, extra)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

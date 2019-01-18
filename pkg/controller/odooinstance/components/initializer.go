@@ -75,12 +75,15 @@ func (_ *initializerComponent) IsReconcilable(ctx *components.ComponentContext) 
 }
 
 func (comp *initializerComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-	obj, err := ctx.GetTemplate(comp.templatePath, nil)
+	instance := ctx.Top.(*instancev1beta1.OdooInstance)
+	extra := map[string]interface{}{}
+	extra["Track"] = instance.Labels["cluster.odoo.io/part-of-track"]
+
+	obj, err := ctx.GetTemplate(comp.templatePath, extra)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 	job := obj.(*batchv1.Job)
-	instance := ctx.Top.(*instancev1beta1.OdooInstance)
 
 	existing := &batchv1.Job{}
 	err = ctx.Get(ctx.Context, types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, existing)

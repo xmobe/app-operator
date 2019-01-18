@@ -56,11 +56,11 @@ spec: &jobspec
       volumes:
         - name: data-volume
           persistentVolumeClaim:
-            claimName: {{ .Extra.ClusterName }}.storage.data
+            claimName: {{ .Instance.Spec.Cluster }}.storage.data
         - name: config-volume
           configMap:
             name: v{{ .Instance.Spec.Version | replace "." "-" }}.app.config
         - name: app-secret
           secret:
-            secretName: {{ .Extra.ClusterName }}.app.secret
+            secretName: {{ .Instance.Spec.Cluster }}.app.secret
 {{ end -}}
