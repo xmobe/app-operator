@@ -36,6 +36,7 @@ import (
 	"github.com/blaggacao/ridecell-operator/pkg/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
@@ -50,8 +51,17 @@ func (*metaComponent) WatchTypes() []runtime.Object { return []runtime.Object{} 
 func (*metaComponent) IsReconcilable(_ *components.ComponentContext) bool { return true }
 
 func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-
 	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
+
+	// Fetch OdooCluster
+	clusterinstance := &clusterv1beta1.OdooCluster{}
+	err := ctx.Get(ctx.Context, client.ObjectKey{
+		Name:      instance.Spec.Cluster,
+		Namespace: instance.GetNamespace(),
+	}, clusterinstance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 	// Fetch OdooTrack
 	listObjTrack := &clusterv1beta1.OdooTrackList{}
 	res, obj, err := ctx.GetOne(listObjTrack, map[string]string{
@@ -73,6 +83,11 @@ func (*metaComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Res
 			"app.kubernetes.io/version":       instance.Spec.Version,
 			"app.kubernetes.io/part-of":       odooTrack.Name,
 			"app.kubernetes.io/track":         fmt.Sprintf("%v", instance.Spec.Track),
+		}
+		goalMeta.Annotations = map[string]string{
+			"cluster.odoo.io/registry":   clusterinstance.Spec.Image.Registry,
+			"cluster.odoo.io/pull-seret": clusterinstance.Spec.Image.Secret,
+			"cluster.odoo.io/repository": clusterinstance.Spec.Image.Repo,
 		}
 		return nil
 	})

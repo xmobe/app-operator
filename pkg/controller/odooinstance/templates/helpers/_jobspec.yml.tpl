@@ -9,7 +9,7 @@ spec: &jobspec
     spec:
       restartPolicy: Never
       imagePullSecrets:
-      - name: pull-secret
+      - name: {{ .Extra.Image.Secret }}
       terminationMessagePolicy: FallbackToLogsOnError
       securityContext:
         fsGroup: 9001
@@ -19,7 +19,7 @@ spec: &jobspec
         supplementalGroups: [2000]
       containers:
       - name: default
-        image: {{ .Extra.Image }}:devops-{{ .Extra.Track }}-{{ .Instance.Spec.Version }}
+        image: {{ .Extra.Image.Registry }}/{{ .Extra.Image.Repository }}:devops-{{ .Extra.Image.Trackname }}-{{ .Extra.Image.Version }}
         imagePullPolicy: Always
         args:
         {{ block "jobArgs" . }}{{ end }}

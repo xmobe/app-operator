@@ -35,6 +35,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
 )
 
 type deploymentComponent struct {
@@ -58,10 +60,15 @@ func (_ *deploymentComponent) IsReconcilable(_ *components.ComponentContext) boo
 }
 
 func (comp *deploymentComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-	// Set up the extra data map for the template.
+	instance := ctx.Top.(*clusterv1beta1.OdooVersion)
 	extra := map[string]interface{}{}
-	extra["ConfigFile"] = "ok"
-
+	extra["Image"] = clusterv1beta1.OdooImageSpec{
+		Registry:   instance.Annotations["cluster.odoo.io/registry"],
+		Repository: instance.Annotations["cluster.odoo.io/repository"],
+		Trackname:  instance.Labels["app.kubernetes.io/track"],
+		Version:    instance.Labels["app.kubernetes.io/version"],
+		Secret:     instance.Annotations["cluster.odoo.io/pull-secret"],
+	}
 	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*appsv1.Deployment)
 		existing := existingObj.(*appsv1.Deployment)

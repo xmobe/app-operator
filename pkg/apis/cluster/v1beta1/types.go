@@ -47,10 +47,10 @@ type ConfigValue struct {
 
 // OdooImageSpec defines an Image and (optionally) it's registry credentials
 type OdooImageSpec struct {
-	Repository string            `json:"repository"`
-	Image      string            `json:"image"`
-	Trackname  OdooTracknameType `json:"track"`
-	Version    string            `json:"version"`
+	Registry   string `json:"registry"`
+	Repository string `json:"repository"`
+	Trackname  string `json:"track"`
+	Version    string `json:"version"`
 	// +optional
 	Secret string `json:"secret,omitempty"`
 }

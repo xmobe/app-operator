@@ -23,7 +23,7 @@ spec:
         app.kubernetes.io/managed-by: odoo-operator
     spec:
       imagePullSecrets:
-      - name: pull-secret
+      - name: {{ .Extra.Image.Secret }}
       terminationMessagePolicy: FallbackToLogsOnError
       securityContext:
         fsGroup: 9001
@@ -33,7 +33,7 @@ spec:
         supplementalGroups: [2000]
       containers:
       - name: default
-        image: {{ .Extra.Image }}:base-{{ .Instance.Spec.Track }}-{{ .Instance.Spec.Version }}
+        image: {{ .Extra.Image.Registry }}/{{ .Extra.Image.Repository }}:base-{{ .Extra.Image.Trackname }}-{{ .Extra.Image.Version }}
         imagePullPolicy: Always
         args:
         {{ block "deploymentArgs" . }}{{ end }}

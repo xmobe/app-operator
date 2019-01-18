@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/blaggacao/ridecell-operator/pkg/components"
+	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
 	instancev1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/instance/v1beta1"
 )
 
@@ -74,7 +75,13 @@ func (_ *backuperComponent) IsReconcilable(ctx *components.ComponentContext) boo
 func (comp *backuperComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
 	extra := map[string]interface{}{}
-	extra["Track"] = instance.Labels["cluster.odoo.io/part-of-track"]
+	extra["Image"] = clusterv1beta1.OdooImageSpec{
+		Registry:   instance.Annotations["cluster.odoo.io/registry"],
+		Repository: instance.Annotations["cluster.odoo.io/repository"],
+		Trackname:  instance.Labels["app.kubernetes.io/track"],
+		Version:    instance.Labels["app.kubernetes.io/version"],
+		Secret:     instance.Annotations["cluster.odoo.io/pull-secret"],
+	}
 
 	obj, err := ctx.GetTemplate(comp.templatePath, extra)
 	if err != nil {
