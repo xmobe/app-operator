@@ -61,7 +61,7 @@ func (_ *serviceComponent) IsReconcilable(_ *components.ComponentContext) bool {
 func (comp *serviceComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
 	// Set up the extra data map for the template.
 	extra := map[string]interface{}{}
-	extra["ConfigFile"] = "ok"
+	extra["Service"] = true
 
 	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.Service)

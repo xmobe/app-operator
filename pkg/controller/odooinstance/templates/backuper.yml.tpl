@@ -1,5 +1,5 @@
-{{- define "componentName" }}cron{{ end }}
-{{- define "componentType" }}backup{{ end }}
+{{- define "componentName" }}backuper{{ end }}
+{{- define "componentType" }}db{{ end }}
 {{- define "jobArgs" -}}
         - dodoo-backuper
         - --config

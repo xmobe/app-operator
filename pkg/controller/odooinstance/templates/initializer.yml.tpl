@@ -1,5 +1,5 @@
 {{- define "componentName" }}initializer{{ end }}
-{{- define "componentType" }}app{{ end }}
+{{- define "componentType" }}db{{ end }}
 {{- define "jobArgs" -}}
         - dodoo-initializer
         - --config

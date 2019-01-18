@@ -1,6 +1,10 @@
 {{- define "metadata" }}
 metadata:
-  name: {{ block "componentType" . }}{{ end }}-{{ .Instance.Spec.Version | replace "." "-" }}-{{ block "componentName" . }}{{ end }}
+  {{- if .Extra.Service }}
+  name: v{{ .Instance.Spec.Version | replace "." "-" }}-{{ block "componentType" . }}{{ end }}-{{ block "componentName" . }}{{ end }}
+  {{- else }}
+  name: v{{ .Instance.Spec.Version | replace "." "-" }}.{{ block "componentType" . }}{{ end }}.{{ block "componentName" . }}{{ end }}
+  {{- end }}
   namespace: {{ .Instance.Namespace }}
   labels: &metadatalabels
     cluster.odoo.io/part-of-cluster: {{ .Instance.Spec.Cluster | quote }}

@@ -62,25 +62,27 @@ spec:
         volumeMounts:
         - name: data-volume
           mountPath: /mnt/odoo/data/
+        - name: backup-volume
+          mountPath: /mnt/odoo/backup/
         - name: config-volume
           mountPath: /run/configs/odoo/
           readonly: true
-        - name: app-secrets
+        - name: app-secret
           mountPath: /run/secrets/odoo/
           readonly: true
       volumes:
         - name: data-volume
-          volumeSource:
-            name: {{ .Extra.ClusterName }}-data
+          persistentVolumeClaim:
+            claimName: {{ .Extra.ClusterName }}.storage.data
         - name: backup-volume
-          volumeSource:
-            name: {{ .Extra.ClusterName }}-backup
+          persistentVolumeClaim:
+            claimName: {{ .Extra.ClusterName }}.storage.backup
         - name: config-volume
           configMap:
-            name: {{ .Instance.Name }}-config
+            name: v{{ .Instance.Spec.Version | replace "." "-" }}.app.config
             defaultMode: 272
-        - name: app-secrets
+        - name: app-secret
           secret:
-            secretName: {{ .Instance.Name }}.app-secrets
+            secretName: {{ .Extra.ClusterName }}.app.secret
             defaultMode: 256
 {{ end -}}

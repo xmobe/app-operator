@@ -49,18 +49,18 @@ spec: &jobspec
         - name: config-volume
           mountPath: /run/configs/odoo/
           readonly: true
-        - name: app-secrets
+        - name: app-secret
           mountPath: /run/secrets/odoo/
           readonly: true
 
       volumes:
         - name: data-volume
-          configMap:
-            name: {{ .Extra.ClusterName }}-data-volume
+          persistentVolumeClaim:
+            claimName: {{ .Extra.ClusterName }}.storage.data
         - name: config-volume
           configMap:
-            name: {{ .Instance.Name }}-config
-        - name: app-secrets
+            name: v{{ .Instance.Spec.Version | replace "." "-" }}.app.config
+        - name: app-secret
           secret:
-            secretName: {{ .Extra.ClusterName }}-{{ .Instance.Spec.Version }}-secret
+            secretName: {{ .Extra.ClusterName }}.app.secret
 {{ end -}}

@@ -4,10 +4,10 @@
       paths:
       - path: /longpolling
         backend:
-          serviceName: app-{{ .Spec.Version | replace "." "-" }}-longpolling
+          serviceName: v{{ .Spec.Version | replace "." "-" }}-app-longpolling
           servicePort: 8072
       - path: /
         backend:
-          serviceName: app-{{ .Spec.Version | replace "." "-" }}-web
+          serviceName: v{{ .Spec.Version | replace "." "-" }}-app-web
           servicePort: 8069
 {{ end -}}

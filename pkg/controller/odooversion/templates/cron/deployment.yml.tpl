@@ -1,3 +1,4 @@
+{{ $service := false }}
 {{- define "componentName" }}cron{{ end }}
 {{- define "componentType" }}app{{ end }}
 {{- define "deploymentArgs" -}}

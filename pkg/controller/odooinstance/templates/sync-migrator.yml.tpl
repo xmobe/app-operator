@@ -1,5 +1,5 @@
 {{- define "componentName" }}syncmigrator{{ end }}
-{{- define "componentType" }}migration{{ end }}
+{{- define "componentType" }}db{{ end }}
 {{- define "jobArgs" -}}
         - dodoo-migrator
         - --config
