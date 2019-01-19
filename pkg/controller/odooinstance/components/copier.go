@@ -31,8 +31,8 @@
 package components
 
 import (
-	"github.com/blaggacao/ridecell-operator/pkg/components"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/blaggacao/ridecell-operator/pkg/components"
 	clusterv1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/cluster/v1beta1"
 	instancev1beta1 "github.com/xoe-labs/odoo-operator/pkg/apis/instance/v1beta1"
 )
@@ -69,6 +70,21 @@ func (_ *copierComponent) IsReconcilable(ctx *components.ComponentContext) bool 
 	}
 	if instance.GetStatusCondition(instancev1beta1.OdooInstanceStatusConditionTypeCreated) != nil {
 		// The instance is already created (or creating)
+		return false
+	}
+	// Get the parent instance ...
+	listObj := &instancev1beta1.OdooInstanceList{}
+	_, obj, err := ctx.GetOne(listObj, map[string]string{
+		"cluster.odoo.io/part-of-cluster": instance.Labels["cluster.odoo.io/part-of-cluster"],
+		"app.kubernetes.io/instance":      instance.Labels["instance.odoo.io/part-of-instance"],
+	})
+	if err != nil || obj == nil {
+		return false
+	}
+	parentInstance := obj.(*instancev1beta1.OdooInstance)
+	createdCondition := parentInstance.GetStatusCondition(instancev1beta1.OdooInstanceStatusConditionTypeCreated)
+	if createdCondition == nil || createdCondition.Status != corev1.ConditionTrue {
+		// The parent instance is not yet created, don't copy
 		return false
 	}
 	return true
