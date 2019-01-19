@@ -83,7 +83,7 @@ func (i *OdooInstance) SetStatusConditionInitJobCreationCreated() {
 		OdooInstanceStatusConditionTypeCreated,
 		corev1.ConditionFalse,
 		"InitJobCreation",
-		"An initializer Job has been launched to copy and initialize this database instance.")
+		"An initializer Job has been launched to initialize this database instance.")
 	i.SetStatusCondition(*condition)
 }
 func (i *OdooInstance) SetStatusConditionInitJobSuccessCreated() {

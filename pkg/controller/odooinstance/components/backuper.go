@@ -32,6 +32,7 @@ package components
 
 import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -61,12 +62,13 @@ func (_ *backuperComponent) WatchTypes() []runtime.Object {
 
 func (_ *backuperComponent) IsReconcilable(ctx *components.ComponentContext) bool {
 	instance := ctx.Top.(*instancev1beta1.OdooInstance)
-	if instance.Spec.ParentHostname == nil {
-		// The initializer component is the one that should initialize a root instance
+	if instance.Spec.ParentHostname != nil {
+		// Don't backup child instances
 		return false
 	}
-	if instance.GetStatusCondition(instancev1beta1.OdooInstanceStatusConditionTypeCreated) != nil {
-		// The instance is already created (or creating)
+	createdCondition := instance.GetStatusCondition(instancev1beta1.OdooInstanceStatusConditionTypeCreated)
+	if createdCondition == nil || createdCondition.Status != corev1.ConditionTrue {
+		// The instance is not yet created, don't backup
 		return false
 	}
 	return true
