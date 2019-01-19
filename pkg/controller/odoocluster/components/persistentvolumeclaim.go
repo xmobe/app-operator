@@ -73,9 +73,7 @@ func (comp *persistentVolumeClaimComponent) IsReconcilable(ctx *components.Compo
 }
 
 func (comp *persistentVolumeClaimComponent) Reconcile(ctx *components.ComponentContext) (reconcile.Result, error) {
-	extra := map[string]interface{}{}
-	extra["VolumeSpec"] = "ok"
-	res, _, err := ctx.CreateOrUpdate(comp.templatePath, extra, func(goalObj, existingObj runtime.Object) error {
+	res, _, err := ctx.CreateOrUpdate(comp.templatePath, nil, func(goalObj, existingObj runtime.Object) error {
 		goal := goalObj.(*corev1.PersistentVolumeClaim)
 		existing := existingObj.(*corev1.PersistentVolumeClaim)
 		// Copy the Spec over.
