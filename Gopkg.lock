@@ -43,14 +43,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7c51fe30ea5a5b69eeceb7a1f234c5d4d0a31fbc27e9c57e550883db0a1e1994"
+  digest = "1:b0624d97a594fc0c9f3d77ee1a467375c8b568ab49cf60e6de33a644675a51c0"
   name = "github.com/blaggacao/ridecell-operator"
   packages = [
     "pkg/components",
     "pkg/templates",
   ]
   pruneopts = "T"
-  revision = "f1c2e9c6cb45cdc4a604aee14a23e3efe04b28ae"
+  revision = "b02746f709bd9fb71342788581767fde340c768d"
 
 [[projects]]
   digest = "1:9f42202ac457c462ad8bb9642806d275af9ab4850cf0b1960b9c6f083d4a309a"
@@ -1047,6 +1047,7 @@
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/types",
+    "k8s.io/apimachinery/pkg/util/json",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",

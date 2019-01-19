@@ -121,8 +121,9 @@ func (ctx *ComponentContext) GetOne(obj runtime.Object, labels map[string]string
 		ctx.Logger.Error(err, "failed", "labels", labels, "group", gvk.Group, "kind", gvk.Kind)
 		return reconcile.Result{}, nil, err
 	} else if len(items) < 1 {
-		ctx.Logger.Info("no match found", "labels", labels, "group", gvk.Group, "kind", gvk.Kind)
-		return reconcile.Result{Requeue: true}, nil, nil
+		err := fmt.Errorf("no match found")
+		ctx.Logger.Error(err, "labels", labels, "group", gvk.Group, "kind", gvk.Kind)
+		return reconcile.Result{Requeue: true}, nil, err
 	}
 	return reconcile.Result{}, items[0], nil
 
