@@ -5,8 +5,8 @@ metadata:
 spec:
   # appsecret: app-secret-name
   image:
-    registry: "registry.gitlab.com"
-    repo: "xoe-labs/odoo-xoe"
+    registry: "registry.hub.docker.com"
+    repo: "xoelabs/dockery-odoo-test"
     secret: null  # Image must be publicly available
 
   database:
