@@ -1,7 +1,8 @@
 {{- define "componentName" }}initializer{{ end }}
 {{- define "componentType" }}db{{ end }}
 {{- define "jobArgs" -}}
-        - dodoo-initializer
+        - dodoo
+        - init
         - --config
         - /run/configs/odoo/
         - --new-database

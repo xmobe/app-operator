@@ -1,11 +1,12 @@
 {{- define "componentName" }}backuper{{ end }}
 {{- define "componentType" }}db{{ end }}
 {{- define "jobArgs" -}}
-        - dodoo-backuper
+        - dodoo
+        - snapshot
         - --config
         - /run/configs/odoo/
-        - --database
         - {{ .Instance.Spec.Hostname }}
+        - destination-folder
 {{- end -}}
 apiVersion: batch/v1beta1
 kind: CronJob
