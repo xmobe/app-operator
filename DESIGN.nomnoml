@@ -1,0 +1,65 @@
+#direction: right
+[<frame>app.odoo.io|
+  [Database|
+  	AppCredentials |
+  	Connection |
+  	AdminSecret
+  ]
+  [Database] - [AdminSecret]
+  [Config]
+  [Code |
+  	Registry |
+  	Repository |
+  	RepoSecret |
+  	Config
+  ]
+  [Cache |
+  	Image |
+  	routes (tbd)]
+
+  [Code] - [RepoSecret]
+  [Code] o-> [Config]
+  [Release] o-> [Config]
+  [Code] -> 0..* [Release|
+  	SemVer |
+  	Config
+  ]
+]
+
+[<frame>tenant.odoo.io |
+  [Tenant |
+  	BaseHostName |
+  	PrimaryInstance |
+  	MigrationTypeSpec |
+  	StagingTypeSpec |
+  	TestingTypeSpec ||
+  	reconcileBaseHostName()|
+  	reconcilePrimaryInstance()||
+  	[Status|
+  	SecondaryInstances|
+  	HasTransitioningInstance]
+  ] - 0..* [HttpRoute]
+]
+
+[<frame>instance.odoo.io |
+  [Instance |
+  	Release |
+  	InitModules |
+  	InitSQL |
+  	Type; - migration; - staging; - testing ||
+  	[Status|
+  	DatabaseName]
+  ] - [release.app.odoo.io]
+
+]
+
+
+[app.odoo.io] -> 0..* [tenant.odoo.io]
+[tenant.odoo.io] -> 0..* [instance.odoo.io]
+
+[instance.odoo.io] -- [<abstract> lifecycled by the End User]
+[tenant.odoo.io] -- [<abstract> lifecycled by the Key Account Manager]
+[app.odoo.io] -- [<abstract> lifecycled by the DevOps Team]
+
+[<abstract>Tenant: HasTransitioningInstance] -- locks [<abstract>Tenant: reconcileBaseHostName()]
+[<abstract>Tenant: HasTransitioningInstance] -- locks [<abstract>Tenant: reconcilePrimaryInstance()]
