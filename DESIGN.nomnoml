@@ -22,7 +22,17 @@
     Config
   ]
 
-  [Cache (tbd)|
+  [Varnish (tbd)|
+    Image |
+    routes (tbd)||
+    [Status |
+      [StatusCondition|
+        Created |
+        Reconciled |
+        Errored ]]
+  ]
+
+  [Postfix (tbd)|
     Image |
     routes (tbd)||
     [Status |
@@ -91,8 +101,18 @@
         Reconciled |
         Errored ]]
   ]
+
+  [PostFixDomain|
+    [Status|
+      [StatusCondition|
+        Created |
+        Reconciled |
+        Errored ]]
+  ]
+
   [HttpRoute]  -- [<label>ServiceMesh]
 
+  [Tenant] - [PostFixDomain]
   [Tenant] - 0..* [HttpRoute]
   [Tenant] - [MaintenanceSplashScreenService]
   [MaintenanceSplashScreenService] - 0..* [HttpRoute]
