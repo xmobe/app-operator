@@ -22,3 +22,6 @@ bin
 *.swp
 *.swo
 *~
+
+kube_config_cluster.yml
+*.rkestate
