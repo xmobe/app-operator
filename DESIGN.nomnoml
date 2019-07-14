@@ -1,182 +1,128 @@
 #direction: right
 [<frame>app.odoo.io|
-
-  [Database|
+  [DatabaseUser|
     AppCredentials |
     Connection |
-    AdminSecret ||
-    createAppNamespace() |
-    updateAppNamespacePassword() |
-    deleteAppNamespace() ||
-    [Status |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
+    AdminSecret
   ]
-
+  [DatabaseUser] - [AdminSecret]
+  [BaseConfig |
+    Odoo |
+    Testing Route TLS |
+    Staging Route TLS
+  ]
+  [Deployment]
   [Code |
     Registry |
     Repository |
     RepoSecret |
     Config
   ]
-
-  [Varnish (tbd)|
+  [Cache |
     Image |
-    routes (tbd)||
-    [Status |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
-  ]
+    routes (tbd)]
 
-  [Postfix (tbd)|
-    Image |
-    routes (tbd)||
-    [Status |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
-  ]
-
-  [Release|
-    SemVer |
-    Config ||
-    reconcileHttpTier() |
-    reconcileLongpollingTier() |
-    reconcileCronTier() |
-    projectBugfixRelease(); !semver! ||
-    [Status |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
-  ]
-  [HttpDeployment| [autoscaling/v1.Scale]]
-  [LongpollingDeployment| [autoscaling/v1.Scale]]
-  [CronDeployment| [autoscaling/v1.Scale]]
-  [ConfigMap]
-
-  [Code] 0..*-> [Release]
   [Code] - [RepoSecret]
-  [Code] o-> [ConfigMap]
-  [Release] - [ConfigMap]
-  [Release] - [HttpDeployment]
-  [Release] - [LongpollingDeployment]
-  [Release] - [CronDeployment]
-  [Database] - [AdminSecret]
-  [Database] o-> [AppSecret]
-  [AppSecret] - [Release]
+  [Code] o-> [Deployment]
+  [BaseConfig] o-> [Deployment]
+  [Release] o-> [Deployment]
+  [Code] -> 0..* [Release|
+    SemVer |
+    Config
+  ]
 ]
 
 [<frame>tenant.odoo.io |
   [Tenant |
-    BaseHostName: string |
-    ProductionInstance: *corev1.ObjectReference |
-    StagingLimits; - concurrent; - duartion |
-    TestingLimits; - concurrent; - duration ||
+    BaseHost |
+    PrimaryInstanceRef |
+    MaintenanceSplash |
+    SuspendedSplash |
+    UpgradeSplash |
+    Custom TLS Cert |
+    InSuspension |
+    InMaintenance |
     reconcileBaseHostName()|
     reconcilePrimaryInstance()||
     [Status|
-      ProductionInstance: *corev1.ObjectReference|
-      StagingInstances: \[\]corev1.ObjectReference|
-      TestingInstances: \[\]corev1.ObjectReference|
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored |
-        HasTransitioningInstance |
-        IsInMigration ]]
+    SecondaryInstances|
+    HasTransitioningInstance]
   ]
-  [MaintenanceSplashScreenService|
-    Duration: meta/v1.Time |
-    Reason: string |
-    Image: string |
-    [Status|
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
+  [TestingPlan |
+    No. of parallel |
+    TTL |
+    initModule |
+    initSQL
   ]
-
-  [PostFixDomain|
-    [Status|
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
+  [MigrationPlan |
+    No. of parallel |
+    TTL |
+    initModule |
+    initSQL
   ]
+  [BackupPlan |
+    Frequency |
+    Retention I Interval |
+    Retention I # |
+    Retention II Interval |
+    Retention II # |
+    Retention III Interval |
+    Retention III #
+  ]
+  [ResourcePlan; (with Normed Workers) |
+    Max. DB Storage (and) |
+    Max. File Storage (and) |
+    Max. Storage (or) |
+    No. Worker |
+    No. Cron |
+    Net Rate Limits
+  ]
+  [ResourcePlan] o-> [Tenant]
+  [BackupPlan] o-> [Tenant]
+  [MigrationPlan] o-> [Tenant]
+  [TestingPlan] o-> [Tenant]
 
-  [HttpRoute]  -- [<label>ServiceMesh]
-
-  [Tenant] - [PostFixDomain]
-  [Tenant] - 0..* [HttpRoute]
-  [Tenant] - [MaintenanceSplashScreenService]
-  [MaintenanceSplashScreenService] - 0..* [HttpRoute]
 ]
 
 [<frame>instance.odoo.io |
-  [Production |
-    Release: *corev1.ObjectReference|
-    Tenant: *corev1.ObjectReference|
-    InitModules: \[\]string |
-    InitSQL: string ||
+  [Database |
+    Release |
+    Type; - production; - migration; - staging; - testing ||
     [Status|
-    DatabaseName |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored |
-        Migrating ]]
+    DatabaseName]
+  ] - [deployment.app.odoo.io]
+  [InitJob |
+    InitModules |
+    InitSQL
   ]
-
-  [Production] - [<transceiver> batch/v1.Job(Init)]
-  [Production] -* [<transceiver> batch/v1.Job(ApplyMigration)]
-  [Production] - [<database> BaseHostName]
-
-  [Staging |
-    Prefix: string |
-    Release: *corev1.ObjectReference |
-    Tenant: *corev1.ObjectReference |
-    PromoteAfterSuccess: Boolean |
-    InitModules: \[\]string |
-    InitSQL: string ||
-    flipDatabaseWithProduction() ||
-    [Status |
-    DatabaseName |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
+  [SnapshotJob |
+    SnapshotPath
   ]
-  [Staging] - [<transceiver> batch/v1.Job(MuteExternalEffects)]
-  [Staging] - [<transceiver> batch/v1.Job(ApplyMigration)]
-  [Staging] - [<database> StagingPrefix.BaseHostName]
-
-  [Testing |
-    Prefix: string|
-    Tenant: *corev1.ObjectReference|
-    InitModules: \[\]string |
-    InitSQL: string ||
+  [CopyJob |
+    InitModules |
+    InitSQL
+  ]
+  [Migration |
+    blocked (by KAM) |
+    PredecessorMigration ||
     [Status|
-    DatabaseName |
-      [StatusCondition|
-        Created |
-        Reconciled |
-        Errored ]]
+    TestRuns |
+    Resolved; run or skipped]
+  ] - [Target - deployment.app.odoo.io]
+  [MigrationJob |
+    MigrationYaml
   ]
-
-  [Testing] - [<transceiver> batch/v1.Job(MuteExternalEffects)]
-  [Testing] - [<database> TestingPrefix.BaseHostName]
-
-  [Staging] - [release.app.odoo.io - 0.3.0]
-  [Production] - [release.app.odoo.io - 0.2.0]
-  [Testing] - [release.app.odoo.io - 0.2.0]
-  [Production] -- [Testing]
-  [Production] -- [Staging]
+  [MigrationStagingJob |
+    MigrationYaml
+  ]
+  [Database] - [InitJob]
+  [Database] - [CopyJob]
+  [Database] - [SnapshotJob]
+  [Migration] - [Database]
+  [Migration] - [MigrationJob]
+  [Migration] - [MigrationStagingJob]
+  [MigrationJob] -> [CopyJob]
+  [MigrationStagingJob] -> [CopyJob]
 ]
 
 
@@ -187,11 +133,5 @@
 [tenant.odoo.io] -- [<abstract> lifecycled by the Key Account Manager]
 [app.odoo.io] -- [<abstract> lifecycled by the DevOps Team]
 
-
-  [StatusCondition |
-    Type: XYZStatusConditionType |
-    Status: v1.ConditionStatus |
-    LastTransitionTime: metav1.Time |
-    Reason: string > for machine|
-    Message: string > for human
-  ]
+[<abstract>Tenant: HasTransitioningInstance] -- locks [<abstract>Tenant: reconcileBaseHostName()]
+[<abstract>Tenant: HasTransitioningInstance] -- locks [<abstract>Tenant: reconcilePrimaryInstance()]
