@@ -1,4 +1,4 @@
-module github.com/xoe-labs/odoo-operator2
+module github.com/odoo-operator/odoo-operator
 
 go 1.12
 
