@@ -1,0 +1,7 @@
+apiVersion: app.odoo.io/v1beta1
+kind: DatabaseUser
+metadata:
+  name: databaseuser-sample
+spec:
+  # Add fields here
+  foo: bar

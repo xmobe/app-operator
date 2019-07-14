@@ -8,3 +8,6 @@ resources:
 - group: app
   version: v1beta1
   kind: Release
+- group: app
+  version: v1beta1
+  kind: DatabaseUser
