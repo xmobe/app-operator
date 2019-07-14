@@ -1,0 +1,7 @@
+apiVersion: app.odoo.io/v1beta1
+kind: BaseConfig
+metadata:
+  name: baseconfig-sample
+spec:
+  # Add fields here
+  foo: bar

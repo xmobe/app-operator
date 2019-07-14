@@ -11,3 +11,6 @@ resources:
 - group: app
   version: v1beta1
   kind: DatabaseUser
+- group: app
+  version: v1beta1
+  kind: BaseConfig
