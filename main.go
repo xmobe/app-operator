@@ -60,6 +60,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Code")
 		os.Exit(1)
 	}
+	err = (&controllers.ReleaseReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Release"),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Release")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

@@ -1,0 +1,7 @@
+apiVersion: app.odoo.io/v1beta1
+kind: Release
+metadata:
+  name: release-sample
+spec:
+  # Add fields here
+  foo: bar
