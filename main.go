@@ -19,8 +19,8 @@ import (
 	"flag"
 	"os"
 
-	appv1beta1 "github.com/odoo-operator/odoo-operator/api/v1beta1"
-	"github.com/odoo-operator/odoo-operator/controllers"
+	appv1beta1 "github.com/odoo-operator/app-operator/api/v1beta1"
+	"github.com/odoo-operator/app-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"

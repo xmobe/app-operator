@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	appv1beta1 "github.com/odoo-operator/odoo-operator/api/v1beta1"
+	appv1beta1 "github.com/odoo-operator/app-operator/api/v1beta1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"

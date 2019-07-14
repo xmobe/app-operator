@@ -22,7 +22,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appv1beta1 "github.com/odoo-operator/odoo-operator/api/v1beta1"
+	appv1beta1 "github.com/odoo-operator/app-operator/api/v1beta1"
 )
 
 // CodeReconciler reconciles a Code object

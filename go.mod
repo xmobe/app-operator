@@ -1,4 +1,4 @@
-module github.com/odoo-operator/odoo-operator
+module github.com/odoo-operator/app-operator
 
 go 1.12
 
