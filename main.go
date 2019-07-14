@@ -19,6 +19,8 @@ import (
 	"flag"
 	"os"
 
+	appv1beta1 "github.com/odoo-operator/odoo-operator/api/v1beta1"
+	"github.com/odoo-operator/odoo-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,6 +35,7 @@ var (
 
 func init() {
 
+	appv1beta1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -49,6 +52,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = (&controllers.CodeReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Code"),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Code")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

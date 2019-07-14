@@ -1,3 +1,7 @@
 version: "2"
 domain: odoo.io
 repo: github.com/odoo-operator/odoo-operator
+resources:
+- group: app
+  version: v1beta1
+  kind: Code
