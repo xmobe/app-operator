@@ -14,3 +14,6 @@ resources:
 - group: app
   version: v1beta1
   kind: BaseConfig
+- group: app
+  version: v1beta1
+  kind: Deployment
