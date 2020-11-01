@@ -8,3 +8,5 @@ The Odoo Operator is reified (in the form of code) odoo operating knowledge. It'
 - Implement a reconciliation loop that's still missing
 - Or: a whole new component to ecome part of the flock.
 - Or: Your own upstream operator
+
+![Overview](nomnoml.png "Overview")
